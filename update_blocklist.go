@@ -30,6 +30,7 @@ func updateBlocklist() error {
 		return err
 	}
 
+	log.Println("successfully updated blocklist table")
 	return nil
 }
 

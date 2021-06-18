@@ -18,12 +18,12 @@ https://golang.org/
 ### Start Postgres
 
 ```
-docker run --rm -d --name postgres -p 5432:5432 -e POSTGRES_PASSWORD=password postgres:13.3
+$ docker run --rm -d --name postgres -p 5432:5432 -e POSTGRES_PASSWORD=password postgres:13.3
 ```
 
 ### Configuration
 
-Set any variables in [`.env`](./env) to configure the behaviour of the service.
+Set any variables in [`.env`](./.env) to configure the behaviour of the service.
 
 - `SERVER_ADDR` - The address the server will listen on. The default is `127.0.0.1:8080`.
 - `GIN_MODE` - The mode Gin will run in. Choose either `debug` or `release`. The default is `debug`.

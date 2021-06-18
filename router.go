@@ -9,6 +9,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type Response struct {
+	IPAddress  net.IP      `json:"ipAddress"`
+	Blocklists []Blocklist `json:"blockLists"`
+}
+
+type Blocklist struct {
+	Filename       string `json:"filename"`
+	SourceFileDate string `json:"sourceFileDate"`
+}
+
 func setupRouter() *gin.Engine {
 	if ginMode, ok := os.LookupEnv("GIN_MODE"); ok {
 		gin.SetMode(ginMode)
@@ -19,17 +29,11 @@ func setupRouter() *gin.Engine {
 
 	// Just for testing.
 	r.PUT("/addresses", func(c *gin.Context) {
-		updateBlocklist() // TODO: Handle the error.
+		go updateBlocklist() // TODO: How to handle the error?
 		c.Status(http.StatusOK)
 	})
 
 	return r
-}
-
-// What additional information should I return in the response?
-type Response struct {
-	IPAddress string `json:"ipAddress"`
-	IsBlocked bool   `json:"isBlocked"`
 }
 
 func inBlocklist(c *gin.Context) {
@@ -40,13 +44,23 @@ func inBlocklist(c *gin.Context) {
 	} else {
 		log.Printf("checking blocklist for '%v'\n", ipAddress)
 
-		ok := checkBlocklist(ipAddress)
-		if !ok {
+		blockedIP, err := isIPAddressInBlocklist(ipAddress)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+		} else if blockedIP != nil {
+			log.Printf("'%v' is in the blocklist\n", ipAddress)
+			c.JSON(http.StatusOK, Response{blockedIP.address, convertToProtocolObject(blockedIP.blocklists)})
+		} else {
 			log.Printf("'%v' is NOT in the blocklist\n", ipAddress)
 			c.Status(http.StatusNoContent)
-		} else {
-			log.Printf("'%v' is in the blocklist\n", ipAddress)
-			c.JSON(http.StatusOK, Response{ipAddress.String(), true})
 		}
 	}
+}
+
+func convertToProtocolObject(blocklists []blocklist) []Blocklist {
+	var res []Blocklist
+	for _, blocklist := range blocklists {
+		res = append(res, Blocklist{blocklist.filename, blocklist.sourceFileDate})
+	}
+	return res
 }

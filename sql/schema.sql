@@ -1,5 +1,7 @@
 CREATE TABLE IF NOT EXISTS blocklist (
-  address INET
+  address INET NOT NULL,
+  filename TEXT NOT NULL,
+  source_file_date TEXT
 );
 
-CREATE INDEX IF NOT EXISTS blocklist_address_gist_idx ON blocklist USING GIST (address inet_ops);
+CREATE INDEX IF NOT EXISTS address_idx ON blocklist USING GIST (address inet_ops);

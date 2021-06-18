@@ -2,12 +2,12 @@
 
 ## TODO
 
-[ ] Tests
-[ ] Get `updateBlocklist` to run every 24.3 hours
-[ ] Benchmark
-[ ] Review error handling
-[ ] If benchmarks are terrible find a better way to populate the table
-[ ] Is the way I update the table sane?
+- [ ] Tests
+- [ ] Get `updateBlocklist` to run every 24.3 hours
+- [ ] Benchmark
+- [ ] Review error handling
+- [ ] If benchmarks are terrible find a better way to populate the table
+- [ ] Is the way I update the table sane?
 
 ## Usage
 

@@ -33,8 +33,9 @@ func loadEnvVars() {
 	var ok bool
 	var err error
 
-	err = godotenv.Load()
-	checkError(err, "error loading '.env'")
+	if err = godotenv.Load(); err != nil {
+		log.Println("error loading '.env'; continuing anyway")
+	}
 
 	serverAddr, ok = os.LookupEnv("SERVER_ADDR")
 	checkOk(ok, "error reading 'SERVER_ADDR' environment variable")

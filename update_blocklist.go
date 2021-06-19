@@ -10,7 +10,7 @@ import (
 
 const blocklistRepoURL = "https://github.com/firehol/blocklist-ipsets"
 
-func updateBlocklists() error {
+func cloneAndUpdateBlocklists() error {
 	if err := cloneBlocklistRepo(); err != nil {
 		return errors.Wrap(err, "error cloning blocklist repo")
 	}
@@ -40,5 +40,24 @@ func cloneBlocklistRepo() error {
 		return errors.Wrap(err, "error cloning "+blocklistRepoURL)
 	}
 
+	log.Printf("successfully cloned '%v'\n", blocklistRepoURL)
+
+	return nil
+}
+
+func updateBlocklists() error {
+	if err := createTempTable(); err != nil {
+		return errors.Wrap(err, "error creating temp table")
+	}
+
+	if err := addIPSetsToTempTable(); err != nil {
+		return errors.Wrap(err, "error adding ipsets to temp table")
+	}
+
+	if err := replaceBlocklistTableWithTempTable(); err != nil {
+		return errors.Wrap(err, "error replacing blocklist table with temp table")
+	}
+
+	log.Println("successfully updated blocklist table")
 	return nil
 }

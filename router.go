@@ -26,7 +26,7 @@ func setupRouter(ginMode string) *gin.Engine {
 
 	// For testing purposes.
 	r.PUT("/addresses", func(c *gin.Context) {
-		if err := updateBlocklists(); err != nil {
+		if err := cloneAndUpdateBlocklists(); err != nil {
 			log.Printf("error updating blocklist: %v", err)
 		}
 		c.Status(http.StatusOK)

@@ -146,3 +146,14 @@ func TestIPV6AddressIsInANetSet(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 	assert.Equal(t, want, resp)
 }
+
+func TestNotAnIPAddress(t *testing.T) {
+	ipAddress := "foo"
+
+	r := setupRouter("release")
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/v1/addresses/"+ipAddress, nil)
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, 400, w.Code)
+}

@@ -2,7 +2,6 @@
 
 ## TODO
 
-- [ ] Tests
 - [ ] Review error handling
 - [ ] If benchmarks are terrible find a better way to populate the table
 - [ ] Is the way I update the table sane?
@@ -16,7 +15,7 @@ https://golang.org/
 ### Start Postgres
 
 ```
-$ docker run --rm -d --name postgres -p 5432:5432 -e POSTGRES_PASSWORD=password postgres:13.3
+docker run --rm -d --name postgres -p 5432:5432 -e POSTGRES_PASSWORD=password postgres:13.3
 ```
 
 ### Configuration
@@ -39,15 +38,28 @@ should start the service listening at `SERVER_ADDR`.
 
 ### Tests
 
-TODO
+Start Postgres if not already running and create a database called `test`. If Postgres is not already running you can use the following command:
+```
+docker run --rm -d --name postgres -p 5432:5432 -e POSTGRES_PASSWORD=password -e POSTGRES_DB=test postgres:13.3
+```
+
+Run the tests:
+```
+go test
+```
+
+When the tests are finish remove the database with:
+```
+docker stop test_postgres
+```
 
 ## Benchmarking
 
-You can benchmark using a partial subset of the [blocklist_de.ipset](./benchmark.ipset) (the first 10,000 entries of the 2021-06-19 version).
+You can benchmark using a partial subset of the [blocklist_de.ipset](./test_ipsets/benchmark.ipset) (the first 10,000 entries of the 2021-06-19 version).
 
 For example, using `siege` in benchmark mode with 10 concurrent users for 5 minutes:
 ```
-$ siege -b -c10 -t5m -f benchmark.ipset
+$ siege -b -c10 -t5m -f test_ipsets/benchmark.ipset
 
 {
 	"transactions":			        110167,

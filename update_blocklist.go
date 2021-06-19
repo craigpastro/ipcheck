@@ -5,51 +5,40 @@ import (
 	"os"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/pkg/errors"
 )
 
+const blocklistRepoURL = "https://github.com/firehol/blocklist-ipsets"
+
 func updateBlocklist() error {
-	err := cloneOrPullBlockListRepo()
-	if err != nil {
-		log.Printf("clone or pull blocklist repo: %v\n", err)
+	if err := cloneBlocklistRepo(); err != nil {
+		return errors.Wrap(err, "error cloning blocklist repo")
 	}
 
-	failures := addIPSetsToTempTable()
-	if failures > 0 {
-		log.Printf("error adding ipsets to temp table: %v\n", err)
+	if err := createTempTable(); err != nil {
+		return errors.Wrap(err, "error creating temp table")
 	}
 
-	replaceBlocklistTableWithTempTable()
+	if err := addIPSetsToTempTable(); err != nil {
+		return errors.Wrap(err, "error adding ipsets to temp table")
+	}
 
+	if err := replaceBlocklistTableWithTempTable(); err != nil {
+		return errors.Wrap(err, "error replacing blocklist table with temp table")
+	}
+
+	log.Println("successfully updated blocklist table")
 	return nil
 }
 
-func cloneOrPullBlockListRepo() error {
-	var err error
-
-	if _, err = os.Stat(ipSetsDir); os.IsNotExist(err) {
-		log.Println("cloning blocklist repo")
-
-		_, err = git.PlainClone(ipSetsDir, false, &git.CloneOptions{
-			URL: "https://github.com/firehol/blocklist-ipsets",
-		})
-	} else {
-		log.Println("pulling blocklist repo")
-
-		r, err := git.PlainOpen(ipSetsDir)
-		if err != nil {
-			return err
-		}
-
-		w, err := r.Worktree()
-		if err != nil {
-			return err
-		}
-
-		err = w.Pull(&git.PullOptions{RemoteName: "origin"})
-		if err != nil {
-			return err
-		}
+func cloneBlocklistRepo() error {
+	if err := os.RemoveAll(ipSetsDir); err != nil {
+		return errors.Wrap(err, "error removing current IP_SETS_DIR")
 	}
 
-	return err
+	if _, err := git.PlainClone(ipSetsDir, false, &git.CloneOptions{URL: blocklistRepoURL}); err != nil {
+		return errors.Wrap(err, "error cloning "+blocklistRepoURL)
+	}
+
+	return nil
 }

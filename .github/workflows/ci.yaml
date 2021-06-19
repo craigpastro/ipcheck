@@ -34,7 +34,7 @@ jobs:
         image: postgres:13.3
         env:
           POSTGRES_PASSWORD: password
-          POSTGRES_HOST: localhost
+          POSTGRES_HOST: '127.0.0.1'
           POSTGRES_DB: test
     steps:
       - uses: actions/checkout@v2

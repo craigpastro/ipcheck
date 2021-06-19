@@ -38,9 +38,9 @@ should start the service listening at `SERVER_ADDR`.
 
 ### Tests
 
-Start Postgres if not already running and create a database called `test`. If Postgres is not already running you can use the following command:
+Start Postgres (note the port and name):
 ```
-docker run --rm -d --name postgres -p 5432:5432 -e POSTGRES_PASSWORD=password -e POSTGRES_DB=test postgres:13.3
+docker run --rm -d --name test_postgres -p 6543:5432 -e POSTGRES_PASSWORD=password -e POSTGRES_DB=test postgres:13.3
 ```
 
 Run the tests:

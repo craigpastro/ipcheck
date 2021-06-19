@@ -13,7 +13,7 @@ import (
 
 func TestMain(m *testing.M) {
 	dbConfig := dbConfig{
-		"postgres://postgres:password@localhost:5432/test",
+		"postgres://postgres:password@127.0.0.1:6543/test",
 		true,
 		"test_ipsets",
 		[]string{"a.netset", "b.ipset", "c.ipset"},

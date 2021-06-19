@@ -46,12 +46,13 @@ func inBlocklist(c *gin.Context) {
 
 		blockedIP, err := isIPAddressInBlocklist(ipAddress)
 		if err != nil {
+			log.Printf("error checking if '%v' is in the blocklists: %v", ipAddress, err)
 			c.Status(http.StatusInternalServerError)
 		} else if blockedIP != nil {
-			log.Printf("'%v' is in the blocklist\n", ipAddress)
+			log.Printf("'%v' is in the blocklists\n", ipAddress)
 			c.JSON(http.StatusOK, Response{blockedIP.address, convertToProtocolObject(blockedIP.blocklists)})
 		} else {
-			log.Printf("'%v' is NOT in the blocklist\n", ipAddress)
+			log.Printf("'%v' is NOT in the blocklists\n", ipAddress)
 			c.Status(http.StatusNoContent)
 		}
 	}

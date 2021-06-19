@@ -13,7 +13,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-var dbPool *pgxpool.Pool
+var (
+	dbPool     *pgxpool.Pool
+	allMatches bool
+	ipSetsDir  string
+	ipSets     []string
+)
 
 type blockedIP struct {
 	address    net.IP
@@ -25,11 +30,15 @@ type blocklist struct {
 	sourceFileDate string
 }
 
-func initDb() {
+func initDb(dbConfig dbConfig) {
+	allMatches = dbConfig.allMatches
+	ipSetsDir = dbConfig.ipSetsDir
+	ipSets = dbConfig.ipSets
+
 	ctx := context.Background()
 	var err error
 
-	dbPool, err = pgxpool.Connect(ctx, os.Getenv("DATABASE_URL"))
+	dbPool, err = pgxpool.Connect(ctx, dbConfig.databaseURL)
 	checkError(err, "unable to connect to the database")
 
 	schemaBytes, err := os.ReadFile("sql/schema.sql")

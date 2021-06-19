@@ -3,8 +3,6 @@
 ## TODO
 
 - [ ] Tests
-- [ ] Get `updateBlocklist` to run every 24.3 hours
-- [ ] Benchmark
 - [ ] Review error handling
 - [ ] If benchmarks are terrible find a better way to populate the table
 - [ ] Is the way I update the table sane?
@@ -42,6 +40,37 @@ should start the service listening at `SERVER_ADDR`.
 ### Tests
 
 TODO
+
+## Benchmarking
+
+You can benchmark using a partial subset of the [blocklist_de.ipset](./benchmark.ipset) (the first 10,000 entries of the 2021-06-19 version).
+
+For example, using `siege` in benchmark mode with 10 concurrent users for 5 minutes:
+```
+$ siege -b -c10 -t5m -f benchmark.ipset
+
+{
+	"transactions":			        110167,
+	"availability":			        100.00,
+	"elapsed_time":			        299.85,
+	"data_transferred":		       13.19,
+	"response_time":		          0.03,
+	"transaction_rate":		      367.41,
+	"throughput":			            0.04,
+	"concurrency":			          9.96,
+	"successful_transactions":  110167,
+	"failed_transactions":		       0,
+	"longest_transaction":		    1.12,
+	"shortest_transaction":		    0.00
+}
+```
+
+## Steps to make IP Checker production ready
+
+1. Add tracing, metrics, and monitoring (for errors, etc.).
+2. Updating the blocklists may fail. Monitor for this and if it does send an email or slack to the service owners.
+3. Move updating the blocklists to a Lambda. This will enable us to easily run replicas of the service if we need to scale.
+4. Consider adding read replicas to the database.
 
 ## References
 

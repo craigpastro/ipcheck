@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/joho/godotenv"
+	"github.com/robfig/cron"
 )
 
 // Environment variables
@@ -24,6 +25,20 @@ func main() {
 
 	initDb()
 	defer dbPool.Close()
+
+	// Immediately initialize the blocklists in the db. Then run approximately
+	// daily after that.
+	//
+	// NOTE: In some sense adding and updating the blocklists is adding state
+	// to this service and, instead, this should probably be done in a Lambda.
+	checkError(updateBlocklists(), "error initializing the blocklists")
+	c := cron.New()
+	c.AddFunc("@every 25h3m", func() {
+		if err := updateBlocklists(); err != nil {
+			log.Printf("error updating blocklist: %v", err)
+		}
+	})
+	c.Start()
 
 	r := setupRouter()
 	r.Run(os.Getenv("SERVER_ADDR"))

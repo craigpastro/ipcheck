@@ -10,7 +10,7 @@ import (
 
 const blocklistRepoURL = "https://github.com/firehol/blocklist-ipsets"
 
-func updateBlocklist() error {
+func updateBlocklists() error {
 	if err := cloneBlocklistRepo(); err != nil {
 		return errors.Wrap(err, "error cloning blocklist repo")
 	}

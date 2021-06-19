@@ -30,13 +30,13 @@ func initDb() {
 	var err error
 
 	dbPool, err = pgxpool.Connect(ctx, os.Getenv("DATABASE_URL"))
-	checkError("unable to connect to the database", err)
+	checkError(err, "unable to connect to the database")
 
 	schemaBytes, err := os.ReadFile("sql/schema.sql")
-	checkError("error reading `sql/schema.sql`", err)
+	checkError(err, "error reading `sql/schema.sql`")
 
 	_, err = dbPool.Exec(ctx, string(schemaBytes))
-	checkError("failed to create the database schema", err)
+	checkError(err, "failed to create the database schema")
 }
 
 func isIPAddressInBlocklist(ipAddress net.IP) (*blockedIP, error) {

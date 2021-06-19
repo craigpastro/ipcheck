@@ -29,7 +29,9 @@ func setupRouter() *gin.Engine {
 
 	// Just for testing.
 	r.PUT("/addresses", func(c *gin.Context) {
-		go updateBlocklist() // TODO: How to handle the error?
+		if err := updateBlocklist(); err != nil {
+			log.Printf("error updating blocklist: %v", err)
+		}
 		c.Status(http.StatusOK)
 	})
 

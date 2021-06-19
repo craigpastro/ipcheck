@@ -18,15 +18,6 @@ jobs:
           go-version: '1.16.x'
       - run: gofmt -l
 
-  lint:
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
-        with:
-          go-version: '1.16.x'
-      - run: golint
-
   vet:
     runs-on: ubuntu-18.04
     steps:
@@ -44,3 +35,11 @@ jobs:
         with:
           go-version: '1.16.x'
       - run: go test
+  
+  golangci-lint:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: golangci/golangci-lint-action@v2
+        with:
+          version: latest

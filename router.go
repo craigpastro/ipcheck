@@ -4,7 +4,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -19,12 +18,10 @@ type Blocklist struct {
 	SourceFileDate string `json:"sourceFileDate"`
 }
 
-func setupRouter() *gin.Engine {
-	if ginMode, ok := os.LookupEnv("GIN_MODE"); ok {
-		gin.SetMode(ginMode)
-	}
-
+func setupRouter(ginMode string) *gin.Engine {
+	gin.SetMode(ginMode)
 	r := gin.Default()
+
 	r.GET("/v1/addresses/:ipaddress", inBlocklist)
 
 	// Just for testing.

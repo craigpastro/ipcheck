@@ -10,20 +10,22 @@ import (
 	"github.com/robfig/cron"
 )
 
-// Environment variables
-var (
-	serverAddr  string
-	ginMode     string
+type appConfig struct {
+	serverAddr string
+	ginMode    string
+}
+
+type dbConfig struct {
 	databaseURL string
 	allMatches  bool
 	ipSetsDir   string
 	ipSets      []string
-)
+}
 
 func main() {
-	loadEnvVars()
+	appConfig, dbConfig := loadEnvVars()
 
-	initDb()
+	initDb(dbConfig)
 	defer dbPool.Close()
 
 	// Immediately initialize the blocklists in the db. Then run approximately
@@ -40,37 +42,37 @@ func main() {
 	})
 	c.Start()
 
-	r := setupRouter()
-	r.Run(os.Getenv("SERVER_ADDR"))
+	r := setupRouter(appConfig.ginMode)
+	r.Run(appConfig.serverAddr)
 }
 
-func loadEnvVars() {
-	var ok bool
-	var err error
+func loadEnvVars() (appConfig, dbConfig) {
+	if err := godotenv.Load(); err != nil {
+		log.Println("error loading '.env'; continuing anyway")
+	}
 
-	err = godotenv.Load()
-	checkError(err, "error loading '.env'")
-
-	serverAddr, ok = os.LookupEnv("SERVER_ADDR")
+	serverAddr, ok := os.LookupEnv("SERVER_ADDR")
 	checkOk(ok, "error reading 'SERVER_ADDR' environment variable")
 
-	ginMode, ok = os.LookupEnv("GIN_MODE")
+	ginMode, ok := os.LookupEnv("GIN_MODE")
 	checkOk(ok, "error reading 'GIN_MODE' environment variable")
 
-	databaseURL, ok = os.LookupEnv("DATABASE_URL")
+	databaseURL, ok := os.LookupEnv("DATABASE_URL")
 	checkOk(ok, "error reading 'DATABASE_URL' environment variable")
 
 	allMatchesString, ok := os.LookupEnv("ALL_MATCHES")
 	checkOk(ok, "error reading 'ALL_MATCHES' environment variable")
-	allMatches, err = strconv.ParseBool(allMatchesString)
+	allMatches, err := strconv.ParseBool(allMatchesString)
 	checkError(err, "error parsing 'ALL_MATCHES' environment variable to bool")
 
-	ipSetsDir, ok = os.LookupEnv("IP_SETS_DIR")
+	ipSetsDir, ok := os.LookupEnv("IP_SETS_DIR")
 	checkOk(ok, "error reading 'IP_SETS_DIR' environment variable")
 
 	ipSetsString, ok := os.LookupEnv("IP_SETS")
 	checkOk(ok, "error reading 'IP_SETS' environment variable")
-	ipSets = strings.Split(ipSetsString, ",")
+	ipSets := strings.Split(ipSetsString, ",")
+
+	return appConfig{serverAddr, ginMode}, dbConfig{databaseURL, allMatches, ipSetsDir, ipSets}
 }
 
 func checkError(err error, msg string) {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/robfig/cron"
+	"github.com/siyopao/ipcheck/storage"
 )
 
 type appConfig struct {
@@ -15,18 +16,13 @@ type appConfig struct {
 	ginMode    string
 }
 
-type dbConfig struct {
-	databaseURL string
-	allMatches  bool
-	ipSetsDir   string
-	ipSets      []string
-}
-
 func main() {
 	appConfig, dbConfig := loadEnvVars()
 
-	initDb(dbConfig)
-	defer dbPool.Close()
+	if err := storage.InitDb(dbConfig); err != nil {
+		checkError(err, "error initilizing the db")
+	}
+	defer storage.DbPool.Close()
 
 	// Immediately initialize the blocklists in the db. Then run approximately
 	// daily after that.
@@ -46,7 +42,7 @@ func main() {
 	r.Run(appConfig.serverAddr)
 }
 
-func loadEnvVars() (appConfig, dbConfig) {
+func loadEnvVars() (appConfig, storage.DbConfig) {
 	if err := godotenv.Load(); err != nil {
 		log.Println("error loading '.env'; continuing anyway")
 	}
@@ -72,7 +68,12 @@ func loadEnvVars() (appConfig, dbConfig) {
 	checkOk(ok, "error reading 'IP_SETS' environment variable")
 	ipSets := strings.Split(ipSetsString, ",")
 
-	return appConfig{serverAddr, ginMode}, dbConfig{databaseURL, allMatches, ipSetsDir, ipSets}
+	return appConfig{serverAddr, ginMode}, storage.DbConfig{
+		DatabaseURL: databaseURL,
+		AllMatches:  allMatches,
+		IpSetsDir:   ipSetsDir,
+		IpSets:      ipSets,
+	}
 }
 
 func checkError(err error, msg string) {

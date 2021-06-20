@@ -1,4 +1,4 @@
-package main
+package storage
 
 import (
 	"bufio"
@@ -14,41 +14,54 @@ import (
 )
 
 var (
-	dbPool     *pgxpool.Pool
+	DbPool     *pgxpool.Pool
 	allMatches bool
-	ipSetsDir  string
-	ipSets     []string
+	IpSetsDir  string
+	IpSets     []string
 )
 
-type blockedIP struct {
-	address    net.IP
-	blocklists []blocklist
+type DbConfig struct {
+	DatabaseURL string
+	AllMatches  bool
+	IpSetsDir   string
+	IpSets      []string
 }
 
-type blocklist struct {
-	filename       string
-	sourceFileDate string
+type BlockedIP struct {
+	Address    net.IP
+	Blocklists []Blocklist
 }
 
-func initDb(dbConfig dbConfig) {
-	allMatches = dbConfig.allMatches
-	ipSetsDir = dbConfig.ipSetsDir
-	ipSets = dbConfig.ipSets
+type Blocklist struct {
+	Filename       string
+	SourceFileDate string
+}
+
+func InitDb(config DbConfig) error {
+	allMatches = config.AllMatches
+	IpSetsDir = config.IpSetsDir
+	IpSets = config.IpSets
 
 	ctx := context.Background()
 	var err error
 
-	dbPool, err = pgxpool.Connect(ctx, dbConfig.databaseURL)
-	checkError(err, "unable to connect to the database")
+	if DbPool, err = pgxpool.Connect(ctx, config.DatabaseURL); err != nil {
+		return errors.Wrap(err, "unable to connect to the database")
+	}
 
 	schemaBytes, err := os.ReadFile("sql/schema.sql")
-	checkError(err, "error reading `sql/schema.sql`")
+	if err != nil {
+		return errors.Wrap(err, "error reading `sql/schema.sql`")
+	}
 
-	_, err = dbPool.Exec(ctx, string(schemaBytes))
-	checkError(err, "failed to create the database schema")
+	if _, err = DbPool.Exec(ctx, string(schemaBytes)); err != nil {
+		return errors.Wrap(err, "failed to create the database schema")
+	}
+
+	return nil
 }
 
-func isIPAddressInBlocklist(ipAddress net.IP) (*blockedIP, error) {
+func IsIPAddressInBlocklist(ipAddress net.IP) (*BlockedIP, error) {
 	var statement string
 	if allMatches {
 		statement = `SELECT filename, source_file_date FROM blocklist WHERE address >>= $1`
@@ -56,48 +69,48 @@ func isIPAddressInBlocklist(ipAddress net.IP) (*blockedIP, error) {
 		statement = `SELECT filename, source_file_date FROM blocklist WHERE address >>= $1 LIMIT 1`
 	}
 
-	rows, err := dbPool.Query(context.Background(), statement, ipAddress.String())
+	rows, err := DbPool.Query(context.Background(), statement, ipAddress.String())
 	if err != nil {
 		return nil, errors.Wrap(err, "postgres error running query")
 	}
 	defer rows.Close()
 
-	var blocklists []blocklist
+	var blocklists []Blocklist
 	var filename string
 	var sourceFileDate string
 	for rows.Next() {
 		if err := rows.Scan(&filename, &sourceFileDate); err != nil {
 			return nil, errors.Wrap(err, "postgres error scanning row")
 		}
-		blocklists = append(blocklists, blocklist{filename, sourceFileDate})
+		blocklists = append(blocklists, Blocklist{filename, sourceFileDate})
 	}
 
 	if len(blocklists) > 0 {
-		return &blockedIP{ipAddress, blocklists}, nil
+		return &BlockedIP{ipAddress, blocklists}, nil
 	}
 
 	return nil, nil
 }
 
-func createTempTable() error {
+func CreateTempTable() error {
 	ctx := context.Background()
 
-	if _, err := dbPool.Exec(ctx, "DROP TABLE IF EXISTS temp"); err != nil {
+	if _, err := DbPool.Exec(ctx, "DROP TABLE IF EXISTS temp"); err != nil {
 		return errors.Wrap(err, "postgres error dropping temp table")
 	}
 
-	if _, err := dbPool.Exec(ctx, `CREATE TABLE temp (address INET NOT NULL, filename TEXT NOT NULL, source_file_date TEXT)`); err != nil {
+	if _, err := DbPool.Exec(ctx, `CREATE TABLE temp (address INET NOT NULL, filename TEXT NOT NULL, source_file_date TEXT)`); err != nil {
 		return errors.Wrap(err, "postgres error creating temp table")
 	}
 
 	return nil
 }
 
-func addIPSetsToTempTable() error {
+func AddIPSetsToTempTable() error {
 	ctx := context.Background()
 
-	for _, ipSet := range ipSets {
-		filename := filepath.Join(ipSetsDir, ipSet)
+	for _, ipSet := range IpSets {
+		filename := filepath.Join(IpSetsDir, ipSet)
 		file, err := os.Open(filename)
 		if err != nil {
 			log.Printf("error reading ipset '%v': %v\n", filename, err)
@@ -112,7 +125,7 @@ func addIPSetsToTempTable() error {
 			l := scanner.Text()
 
 			if !strings.HasPrefix(l, "#") {
-				_, err = dbPool.Exec(ctx, `INSERT INTO temp VALUES ($1, $2, $3)`, l, ipSet, sourceFileDate)
+				_, err = DbPool.Exec(ctx, `INSERT INTO temp VALUES ($1, $2, $3)`, l, ipSet, sourceFileDate)
 				if err != nil {
 					log.Printf("error inserting a row into the temp table: %v", err)
 				}
@@ -124,17 +137,17 @@ func addIPSetsToTempTable() error {
 		}
 	}
 
-	if _, err := dbPool.Exec(ctx, "CREATE INDEX IF NOT EXISTS address_idx ON temp USING GIST (address inet_ops)"); err != nil {
+	if _, err := DbPool.Exec(ctx, "CREATE INDEX IF NOT EXISTS address_idx ON temp USING GIST (address inet_ops)"); err != nil {
 		log.Printf("error creating GiST index on temp table: %v\n", err)
 	}
 
 	return nil
 }
 
-func replaceBlocklistTableWithTempTable() error {
+func ReplaceBlocklistTableWithTempTable() error {
 	ctx := context.Background()
 
-	tx, err := dbPool.Begin(ctx)
+	tx, err := DbPool.Begin(ctx)
 	if err != nil {
 		return errors.Wrap(err, "postgres error creating the table replace transaction")
 	}

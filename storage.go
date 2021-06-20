@@ -49,11 +49,9 @@ func initDb(dbConfig dbConfig) {
 }
 
 func isIPAddressInBlocklist(ipAddress net.IP) (*blockedIP, error) {
-	var statement string
-	if allMatches {
-		statement = `SELECT filename, source_file_date FROM blocklist WHERE address >>= $1`
-	} else {
-		statement = `SELECT filename, source_file_date FROM blocklist WHERE address >>= $1 LIMIT 1`
+	statement := "SELECT filename, source_file_date FROM blocklist WHERE address >>= $1"
+	if !allMatches {
+		statement = statement + " LIMIT 1"
 	}
 
 	rows, err := dbPool.Query(context.Background(), statement, ipAddress.String())

@@ -33,10 +33,10 @@ func main() {
 	//
 	// NOTE: In some sense adding and updating the blocklists is adding state
 	// to this service and, instead, this should probably be done in a Lambda.
-	checkError(updateBlocklists(), "error initializing the blocklists")
+	checkError(cloneAndUpdateBlocklists(), "error initializing the blocklists")
 	c := cron.New()
 	c.AddFunc("@every 25h3m", func() {
-		if err := updateBlocklists(); err != nil {
+		if err := cloneAndUpdateBlocklists(); err != nil {
 			log.Printf("error updating blocklist: %v", err)
 		}
 	})

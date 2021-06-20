@@ -98,6 +98,31 @@ func TestIPAddressIsInTwoBlocklists(t *testing.T) {
 	assert.Equal(t, want, resp)
 }
 
+func TestNotAllMatchesReturnsOneMatch(t *testing.T) {
+	// Need to resetup the database pool for this test.
+	dbConfig := dbConfig{
+		"postgres://postgres:password@127.0.0.1:6543/test",
+		false,
+		"test_ipsets",
+		[]string{"a.netset", "b.ipset", "c.ipset"},
+	}
+	initDb(dbConfig)
+
+	ipAddress := "45.134.26.37"
+
+	r := setupRouter("release")
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/v1/addresses/"+ipAddress, nil)
+	r.ServeHTTP(w, req)
+
+	var resp Response
+	json.Unmarshal([]byte(w.Body.String()), &resp)
+
+	assert.Equal(t, 200, w.Code)
+	assert.Equal(t, ipAddress, resp.IPAddress.String())
+	assert.Equal(t, 1, len(resp.Blocklists))
+}
+
 func TestIPV6AddressIsNotInABlocklist(t *testing.T) {
 	ipAddress := "::1"
 

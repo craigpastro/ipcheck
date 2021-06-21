@@ -42,7 +42,9 @@ func main() {
 	c.Start()
 
 	r := router.InitRouter(appConfig.ginMode)
-	r.Run(appConfig.serverAddr)
+	if err := r.Run(appConfig.serverAddr); err != nil {
+		checkError(err, "error starting the server")
+	}
 }
 
 func loadEnvVars() (appConfig, storage.DbConfig) {

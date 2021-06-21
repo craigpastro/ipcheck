@@ -12,8 +12,6 @@ import (
 	"github.com/siyopao/ipcheck/storage"
 )
 
-const dotEnv = ".env"
-
 type appConfig struct {
 	serverAddr string
 	ginMode    string

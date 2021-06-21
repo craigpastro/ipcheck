@@ -30,7 +30,7 @@ Set any variables in [`.env`](./.env) to configure the behaviour of the service.
 - `GIN_MODE` - The mode Gin will run in. Choose either `debug` or `release`. The default is `debug`.
 - `DATABASE_URL` - The hostname address of a running Postgres instance. The default is `postgres://postgres:password@127.0.0.1:5432/postgres`. (This default works with the docker command above.)
 - `ALL_MATCHES` - When an IP address appears on a blocklist, if this is set to `true` it will return all the blocklists that the IP address appears in. If `false` it will return the first instance found. Note that performance may be affected if set to `true`. The default is `false`.
-- `IP_SETS_DIR` - The directory where you want to download the ipsets to. Default is `/tmp/ipsets` (won't work on Windows so please update it if you are using Windows).
+- `IP_SETS_DIR` - The directory where you want to download the ipsets to. Default is `/tmp/ipsets` (which will not work on Windows so please update it if you are using Windows).
 - `IP_SETS` - A comma separated list of blocklists that you would like the system to use. Please find the list of all blocklists at https://github.com/firehol/blocklist-ipsets. Note, adding many blocklists may lead to performance degradation. The default is `feodo.ipset,palevo.ipset,sslbl.ipset,zeus.ipset,zeus_badips,dshield.netset,spamhaus_drop.netset,spamhaus_edrop.netset,fullbogons.netset,openbl.ipset,blocklist_de.ipset`. (The Level 1 and some of Level 2 blocklists described [here](https://github.com/firehol/blocklist-ipsets#which-ones-to-use).)
 
 ### Running the service

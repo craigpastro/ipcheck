@@ -1,6 +1,7 @@
-package main
+package storage
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -10,34 +11,21 @@ import (
 
 const blocklistRepoURL = "https://github.com/firehol/blocklist-ipsets"
 
-func cloneAndUpdateBlocklists() error {
+func CloneAndUpdateBlocklists() error {
 	if err := cloneBlocklistRepo(); err != nil {
 		return errors.Wrap(err, "error cloning blocklist repo")
 	}
 
-	if err := createTempTable(); err != nil {
-		return errors.Wrap(err, "error creating temp table")
-	}
-
-	if err := addIPSetsToTempTable(); err != nil {
-		return errors.Wrap(err, "error adding ipsets to temp table")
-	}
-
-	if err := replaceBlocklistTableWithTempTable(); err != nil {
-		return errors.Wrap(err, "error replacing blocklist table with temp table")
-	}
-
-	log.Println("successfully updated blocklist table")
-	return nil
+	return UpdateBlocklists()
 }
 
 func cloneBlocklistRepo() error {
 	if err := os.RemoveAll(ipSetsDir); err != nil {
-		return errors.Wrap(err, "error removing current IP_SETS_DIR")
+		return errors.Wrap(err, fmt.Sprintf("error removing '%v'", ipSetsDir))
 	}
 
 	if _, err := git.PlainClone(ipSetsDir, false, &git.CloneOptions{URL: blocklistRepoURL}); err != nil {
-		return errors.Wrap(err, "error cloning "+blocklistRepoURL)
+		return errors.Wrap(err, fmt.Sprintf("error cloning '%v'", blocklistRepoURL))
 	}
 
 	log.Printf("successfully cloned '%v'\n", blocklistRepoURL)
@@ -45,7 +33,8 @@ func cloneBlocklistRepo() error {
 	return nil
 }
 
-func updateBlocklists() error {
+// Visible for testing.
+func UpdateBlocklists() error {
 	if err := createTempTable(); err != nil {
 		return errors.Wrap(err, "error creating temp table")
 	}

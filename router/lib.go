@@ -1,4 +1,4 @@
-package main
+package router
 
 import (
 	"log"
@@ -6,9 +6,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/siyopao/ipcheck/storage"
 )
 
-type Response struct {
+type BlockedIP struct {
 	IPAddress  net.IP      `json:"ipAddress"`
 	Blocklists []Blocklist `json:"blockLists"`
 }
@@ -18,7 +19,7 @@ type Blocklist struct {
 	SourceFileDate string `json:"sourceFileDate"`
 }
 
-func setupRouter(ginMode string) *gin.Engine {
+func InitRouter(ginMode string) *gin.Engine {
 	gin.SetMode(ginMode)
 	r := gin.Default()
 
@@ -26,7 +27,7 @@ func setupRouter(ginMode string) *gin.Engine {
 
 	// For testing purposes.
 	r.PUT("/addresses", func(c *gin.Context) {
-		if err := cloneAndUpdateBlocklists(); err != nil {
+		if err := storage.CloneAndUpdateBlocklists(); err != nil {
 			log.Printf("error updating blocklist: %v", err)
 		}
 		c.Status(http.StatusOK)
@@ -43,13 +44,13 @@ func inBlocklist(c *gin.Context) {
 	} else {
 		log.Printf("checking blocklist for '%v'\n", ipAddress)
 
-		blockedIP, err := isIPAddressInBlocklist(ipAddress)
+		blockedIP, err := storage.IsIPAddressInBlocklist(ipAddress)
 		if err != nil {
 			log.Printf("error checking if '%v' is in the blocklists: %v", ipAddress, err)
 			c.Status(http.StatusInternalServerError)
 		} else if blockedIP != nil {
 			log.Printf("'%v' is in the blocklists\n", ipAddress)
-			c.JSON(http.StatusOK, Response{blockedIP.address, convertToProtocolObject(blockedIP.blocklists)})
+			c.JSON(http.StatusOK, convertToProtocolObject(blockedIP))
 		} else {
 			log.Printf("'%v' is NOT in the blocklists\n", ipAddress)
 			c.Status(http.StatusNoContent)
@@ -57,10 +58,10 @@ func inBlocklist(c *gin.Context) {
 	}
 }
 
-func convertToProtocolObject(blocklists []blocklist) []Blocklist {
-	var res []Blocklist
-	for _, blocklist := range blocklists {
-		res = append(res, Blocklist{blocklist.filename, blocklist.sourceFileDate})
+func convertToProtocolObject(blockedIP *storage.BlockedIP) BlockedIP {
+	var blocklists []Blocklist
+	for _, blocklist := range blockedIP.Blocklists {
+		blocklists = append(blocklists, Blocklist{blocklist.Filename, blocklist.SourceFileDate})
 	}
-	return res
+	return BlockedIP{blockedIP.Address, blocklists}
 }

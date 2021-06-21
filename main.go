@@ -76,8 +76,8 @@ func loadEnvVars() (appConfig, storage.DbConfig) {
 	return appConfig{serverAddr, ginMode}, storage.DbConfig{
 		DatabaseURL: databaseURL,
 		AllMatches:  allMatches,
-		IpSetsDir:   ipSetsDir,
-		IpSets:      ipSets,
+		IPSetsDir:   ipSetsDir,
+		IPSets:      ipSets,
 	}
 }
 

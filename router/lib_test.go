@@ -17,8 +17,8 @@ func TestMain(m *testing.M) {
 	dbConfig := storage.DbConfig{
 		DatabaseURL: "postgres://postgres:password@127.0.0.1:6543/test",
 		AllMatches:  true,
-		IpSetsDir:   "../test_ipsets",
-		IpSets:      []string{"a.netset", "b.ipset", "c.ipset"},
+		IPSetsDir:   "../test_ipsets",
+		IPSets:      []string{"a.netset", "b.ipset", "c.ipset"},
 	}
 
 	storage.InitDb(dbConfig)
@@ -106,8 +106,8 @@ func TestNotAllMatchesReturnsOneMatch(t *testing.T) {
 	dbConfig := storage.DbConfig{
 		DatabaseURL: "postgres://postgres:password@127.0.0.1:6543/test",
 		AllMatches:  false,
-		IpSetsDir:   "test_ipsets",
-		IpSets:      []string{"a.netset", "b.ipset", "c.ipset"},
+		IPSetsDir:   "test_ipsets",
+		IPSets:      []string{"a.netset", "b.ipset", "c.ipset"},
 	}
 	storage.InitDb(dbConfig)
 

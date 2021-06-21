@@ -14,8 +14,8 @@ func TestLoadEnvVarsLoadsDotEnv(t *testing.T) {
 	assert.Equal(t, appConfig.serverAddr, "127.0.0.1:8080")
 	assert.Equal(t, dbConfig.DatabaseURL, "postgres://postgres:password@127.0.0.1:5432/postgres")
 	assert.Equal(t, dbConfig.AllMatches, false)
-	assert.Equal(t, dbConfig.IpSetsDir, "/tmp/ipsets")
-	assert.Equal(t, dbConfig.IpSets[0], "feodo.ipset")
+	assert.Equal(t, dbConfig.IPSetsDir, "/tmp/ipsets")
+	assert.Equal(t, dbConfig.IPSets[0], "feodo.ipset")
 }
 
 func TestLoadEnvVarsDoesNotOverrideSetEnvVars(t *testing.T) {

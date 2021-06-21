@@ -23,8 +23,8 @@ var (
 type DbConfig struct {
 	DatabaseURL string
 	AllMatches  bool
-	IpSetsDir   string
-	IpSets      []string
+	IPSetsDir   string
+	IPSets      []string
 }
 
 type BlockedIP struct {
@@ -39,8 +39,8 @@ type Blocklist struct {
 
 func InitDb(config DbConfig) error {
 	allMatches = config.AllMatches
-	ipSetsDir = config.IpSetsDir
-	ipSets = config.IpSets
+	ipSetsDir = config.IPSetsDir
+	ipSets = config.IPSets
 
 	ctx := context.Background()
 	var err error

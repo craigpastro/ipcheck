@@ -16,8 +16,8 @@ import (
 var (
 	DbPool     *pgxpool.Pool
 	allMatches bool
-	IpSetsDir  string
-	IpSets     []string
+	ipSetsDir  string
+	ipSets     []string
 )
 
 type DbConfig struct {
@@ -39,8 +39,8 @@ type Blocklist struct {
 
 func InitDb(config DbConfig) error {
 	allMatches = config.AllMatches
-	IpSetsDir = config.IpSetsDir
-	IpSets = config.IpSets
+	ipSetsDir = config.IpSetsDir
+	ipSets = config.IpSets
 
 	ctx := context.Background()
 	var err error
@@ -54,7 +54,7 @@ func InitDb(config DbConfig) error {
 		return errors.Wrap(err, "error reading `sql/schema.sql`")
 	}
 
-	if _, err = DbPool.Exec(ctx, string(schemaBytes)); err != nil {
+	if _, err := DbPool.Exec(ctx, string(schemaBytes)); err != nil {
 		return errors.Wrap(err, "failed to create the database schema")
 	}
 
@@ -62,11 +62,9 @@ func InitDb(config DbConfig) error {
 }
 
 func IsIPAddressInBlocklist(ipAddress net.IP) (*BlockedIP, error) {
-	var statement string
-	if allMatches {
-		statement = `SELECT filename, source_file_date FROM blocklist WHERE address >>= $1`
-	} else {
-		statement = `SELECT filename, source_file_date FROM blocklist WHERE address >>= $1 LIMIT 1`
+	statement := "SELECT filename, source_file_date FROM blocklist WHERE address >>= $1"
+	if !allMatches {
+		statement = statement + " LIMIT 1"
 	}
 
 	rows, err := DbPool.Query(context.Background(), statement, ipAddress.String())
@@ -92,7 +90,7 @@ func IsIPAddressInBlocklist(ipAddress net.IP) (*BlockedIP, error) {
 	return nil, nil
 }
 
-func CreateTempTable() error {
+func createTempTable() error {
 	ctx := context.Background()
 
 	if _, err := DbPool.Exec(ctx, "DROP TABLE IF EXISTS temp"); err != nil {
@@ -106,11 +104,11 @@ func CreateTempTable() error {
 	return nil
 }
 
-func AddIPSetsToTempTable() error {
+func addIPSetsToTempTable() error {
 	ctx := context.Background()
 
-	for _, ipSet := range IpSets {
-		filename := filepath.Join(IpSetsDir, ipSet)
+	for _, ipSet := range ipSets {
+		filename := filepath.Join(ipSetsDir, ipSet)
 		file, err := os.Open(filename)
 		if err != nil {
 			log.Printf("error reading ipset '%v': %v\n", filename, err)
@@ -144,7 +142,7 @@ func AddIPSetsToTempTable() error {
 	return nil
 }
 
-func ReplaceBlocklistTableWithTempTable() error {
+func replaceBlocklistTableWithTempTable() error {
 	ctx := context.Background()
 
 	tx, err := DbPool.Begin(ctx)

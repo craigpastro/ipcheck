@@ -1,4 +1,4 @@
-package main
+package router
 
 import (
 	"log"
@@ -19,7 +19,7 @@ type Blocklist struct {
 	SourceFileDate string `json:"sourceFileDate"`
 }
 
-func setupRouter(ginMode string) *gin.Engine {
+func InitRouter(ginMode string) *gin.Engine {
 	gin.SetMode(ginMode)
 	r := gin.Default()
 
@@ -27,7 +27,7 @@ func setupRouter(ginMode string) *gin.Engine {
 
 	// For testing purposes.
 	r.PUT("/addresses", func(c *gin.Context) {
-		if err := updateBlocklists(); err != nil {
+		if err := storage.CloneAndUpdateBlocklists(); err != nil {
 			log.Printf("error updating blocklist: %v", err)
 		}
 		c.Status(http.StatusOK)

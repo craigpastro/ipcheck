@@ -8,8 +8,11 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/robfig/cron"
+	"github.com/siyopao/ipcheck/router"
 	"github.com/siyopao/ipcheck/storage"
 )
+
+const dotEnv = ".env"
 
 type appConfig struct {
 	serverAddr string
@@ -29,16 +32,18 @@ func main() {
 	//
 	// NOTE: In some sense adding and updating the blocklists is adding state
 	// to this service and, instead, this should probably be done in a Lambda.
-	checkError(updateBlocklists(), "error initializing the blocklists")
+	if err := storage.CloneAndUpdateBlocklists(); err != nil {
+		checkError(err, "error initializing the blocklists")
+	}
 	c := cron.New()
-	c.AddFunc("@every 25h3m", func() {
-		if err := updateBlocklists(); err != nil {
+	c.AddFunc("@every 24h", func() {
+		if err := storage.CloneAndUpdateBlocklists(); err != nil {
 			log.Printf("error updating blocklist: %v", err)
 		}
 	})
 	c.Start()
 
-	r := setupRouter(appConfig.ginMode)
+	r := router.InitRouter(appConfig.ginMode)
 	r.Run(appConfig.serverAddr)
 }
 

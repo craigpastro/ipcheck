@@ -112,6 +112,7 @@ func addIPSetsToTempTable() error {
 		file, err := os.Open(filename)
 		if err != nil {
 			log.Printf("error reading ipset '%v': %v\n", filename, err)
+			continue
 		}
 		defer file.Close()
 

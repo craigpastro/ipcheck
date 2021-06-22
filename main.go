@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -59,11 +58,6 @@ func loadEnvVars() (appConfig, storage.DbConfig) {
 	databaseURL, ok := os.LookupEnv("DATABASE_URL")
 	checkOk(ok, "error reading 'DATABASE_URL' environment variable")
 
-	allMatchesString, ok := os.LookupEnv("ALL_MATCHES")
-	checkOk(ok, "error reading 'ALL_MATCHES' environment variable")
-	allMatches, err := strconv.ParseBool(allMatchesString)
-	checkError(err, "error parsing 'ALL_MATCHES' environment variable to bool")
-
 	ipSetsDir, ok := os.LookupEnv("IP_SETS_DIR")
 	checkOk(ok, "error reading 'IP_SETS_DIR' environment variable")
 
@@ -73,7 +67,6 @@ func loadEnvVars() (appConfig, storage.DbConfig) {
 
 	return appConfig{serverAddr, ginMode}, storage.DbConfig{
 		DatabaseURL: databaseURL,
-		AllMatches:  allMatches,
 		IPSetsDir:   ipSetsDir,
 		IPSets:      ipSets,
 	}

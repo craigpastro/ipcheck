@@ -4,6 +4,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/siyopao/ipcheck/storage"
@@ -39,12 +40,17 @@ func InitRouter(ginMode string) *gin.Engine {
 func inBlocklist(c *gin.Context) {
 	ipAddress := net.ParseIP(c.Param("ipaddress"))
 
+	allMatches, err := strconv.ParseBool(c.DefaultQuery("all-matches", "false"))
+	if err != nil {
+		allMatches = false
+	}
+
 	if ipAddress == nil {
 		c.Status(http.StatusBadRequest)
 	} else {
 		log.Printf("checking blocklist for '%v'\n", ipAddress)
 
-		blockedIP, err := storage.IsIPAddressInBlocklist(ipAddress)
+		blockedIP, err := storage.IsIPAddressInBlocklist(ipAddress, allMatches)
 		if err != nil {
 			log.Printf("error checking if '%v' is in the blocklists: %v", ipAddress, err)
 			c.Status(http.StatusInternalServerError)

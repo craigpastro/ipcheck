@@ -14,10 +14,9 @@ import (
 )
 
 var (
-	DbPool     *pgxpool.Pool
-	allMatches bool
-	ipSetsDir  string
-	ipSets     []string
+	DbPool    *pgxpool.Pool
+	ipSetsDir string
+	ipSets    []string
 )
 
 type DbConfig struct {
@@ -38,7 +37,6 @@ type Blocklist struct {
 }
 
 func InitDb(config DbConfig) error {
-	allMatches = config.AllMatches
 	ipSetsDir = config.IPSetsDir
 	ipSets = config.IPSets
 
@@ -61,7 +59,7 @@ func InitDb(config DbConfig) error {
 	return nil
 }
 
-func IsIPAddressInBlocklist(ipAddress net.IP) (*BlockedIP, error) {
+func IsIPAddressInBlocklist(ipAddress net.IP, allMatches bool) (*BlockedIP, error) {
 	statement := "SELECT filename, source_file_date FROM blocklist WHERE address >>= $1"
 	if !allMatches {
 		statement = statement + " LIMIT 1"

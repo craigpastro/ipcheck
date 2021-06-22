@@ -27,7 +27,7 @@ docker run --rm -d --name postgres -p 5432:5432 -e POSTGRES_PASSWORD=password po
 Set any variables in [`.env`](./.env) to configure the behaviour of the service.
 
 - `SERVER_ADDR` - The address the server will listen on. The default is `127.0.0.1:8080`.
-- `GIN_MODE` - The mode Gin will run in. Choose either `debug` or `release`. The default is `debug`.
+- `GIN_MODE` - The mode Gin will run in. Choose either `debug` or `release`. The default is `release`.
 - `DATABASE_URL` - The hostname address of a running Postgres instance. The default is `postgres://postgres:password@127.0.0.1:5432/postgres`. (This default works with the docker command above.)
 - `ALL_MATCHES` - When an IP address appears on a blocklist, if this is set to `true` it will return all the blocklists that the IP address appears in. If `false` it will return the first instance found. Note that performance may be affected if set to `true`. The default is `false`.
 - `IP_SETS_DIR` - The directory where you want to download the ipsets to. Default is `/tmp/ipsets` (which will not work on Windows so please update it if you are using Windows).
@@ -49,7 +49,7 @@ docker run --rm -d --name test_postgres -p 6543:5432 -e POSTGRES_PASSWORD=passwo
 
 Run the tests:
 ```
-go test
+go test ./...
 ```
 
 When the tests are finish remove the database with:

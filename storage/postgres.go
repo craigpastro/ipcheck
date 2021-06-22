@@ -135,10 +135,6 @@ func addIPSetsToTempTable() error {
 		}
 	}
 
-	if _, err := DbPool.Exec(ctx, "CREATE INDEX IF NOT EXISTS address_idx ON temp USING GIST (address inet_ops)"); err != nil {
-		log.Printf("error creating GiST index on temp table: %v\n", err)
-	}
-
 	return nil
 }
 
@@ -160,6 +156,10 @@ func replaceBlocklistTableWithTempTable() error {
 
 	if err = tx.Commit(ctx); err != nil {
 		return errors.Wrap(err, "postgres error committing the table replace transaction")
+	}
+
+	if _, err := DbPool.Exec(ctx, "CREATE INDEX IF NOT EXISTS address_idx ON blocklist USING GIST (address inet_ops)"); err != nil {
+		log.Printf("error creating GiST index on blocklist table: %v\n", err)
 	}
 
 	return nil

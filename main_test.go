@@ -10,7 +10,7 @@ import (
 func TestLoadEnvVarsLoadsDotEnv(t *testing.T) {
 	appConfig, dbConfig := loadEnvVars()
 
-	assert.Equal(t, appConfig.ginMode, "debug")
+	assert.Equal(t, appConfig.ginMode, "release")
 	assert.Equal(t, appConfig.serverAddr, "127.0.0.1:8080")
 	assert.Equal(t, dbConfig.DatabaseURL, "postgres://postgres:password@127.0.0.1:5432/postgres")
 	assert.Equal(t, dbConfig.AllMatches, false)

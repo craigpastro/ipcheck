@@ -16,7 +16,6 @@ import (
 func TestMain(m *testing.M) {
 	dbConfig := storage.DbConfig{
 		DatabaseURL: "postgres://postgres:password@127.0.0.1:6543/test",
-		AllMatches:  true,
 		IPSetsDir:   "../test_ipsets",
 		IPSets:      []string{"a.netset", "b.ipset", "c.ipset"},
 	}
@@ -79,38 +78,7 @@ func TestIPAddressIsInAnIPSet(t *testing.T) {
 	assert.Equal(t, want, resp)
 }
 
-func TestIPAddressIsInTwoBlocklists(t *testing.T) {
-	ipAddress := "45.134.26.37"
-	want := BlockedIP{
-		net.ParseIP(ipAddress),
-		[]Blocklist{
-			{"a.netset", "Thu Jun 17 20:30:46 UTC 2021"},
-			{"b.ipset", "Thu Jun 17 20:30:46 UTC 2021"},
-		},
-	}
-
-	r := InitRouter("release")
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/addresses/"+ipAddress, nil)
-	r.ServeHTTP(w, req)
-
-	var resp BlockedIP
-	json.Unmarshal([]byte(w.Body.String()), &resp)
-
-	assert.Equal(t, 200, w.Code)
-	assert.Equal(t, want, resp)
-}
-
-func TestNotAllMatchesReturnsOneMatch(t *testing.T) {
-	// Need to resetup the database pool for this test.
-	dbConfig := storage.DbConfig{
-		DatabaseURL: "postgres://postgres:password@127.0.0.1:6543/test",
-		AllMatches:  false,
-		IPSetsDir:   "test_ipsets",
-		IPSets:      []string{"a.netset", "b.ipset", "c.ipset"},
-	}
-	storage.InitDb(dbConfig)
-
+func TestNotAllMatchesEmptyReturnsOneMatch(t *testing.T) {
 	ipAddress := "45.134.26.37"
 
 	r := InitRouter("release")
@@ -124,6 +92,44 @@ func TestNotAllMatchesReturnsOneMatch(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 	assert.Equal(t, ipAddress, resp.IPAddress.String())
 	assert.Equal(t, 1, len(resp.Blocklists))
+}
+
+func TestNotAllMatchesFalseReturnsOneMatch(t *testing.T) {
+	ipAddress := "45.134.26.37"
+
+	r := InitRouter("release")
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", fmt.Sprintf("/v1/addresses/%v?all-matches=false", ipAddress), nil)
+	r.ServeHTTP(w, req)
+
+	var resp BlockedIP
+	json.Unmarshal([]byte(w.Body.String()), &resp)
+
+	assert.Equal(t, 200, w.Code)
+	assert.Equal(t, ipAddress, resp.IPAddress.String())
+	assert.Equal(t, 1, len(resp.Blocklists))
+}
+
+func TestIPAddressAllMatchesTrue(t *testing.T) {
+	ipAddress := "45.134.26.37"
+	want := BlockedIP{
+		net.ParseIP(ipAddress),
+		[]Blocklist{
+			{"a.netset", "Thu Jun 17 20:30:46 UTC 2021"},
+			{"b.ipset", "Thu Jun 17 20:30:46 UTC 2021"},
+		},
+	}
+
+	r := InitRouter("release")
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", fmt.Sprintf("/v1/addresses/%v?all-matches=true", ipAddress), nil)
+	r.ServeHTTP(w, req)
+
+	var resp BlockedIP
+	json.Unmarshal([]byte(w.Body.String()), &resp)
+
+	assert.Equal(t, 200, w.Code)
+	assert.Equal(t, want, resp)
 }
 
 func TestIPV6AddressIsNotInABlocklist(t *testing.T) {

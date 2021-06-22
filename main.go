@@ -26,10 +26,8 @@ func main() {
 	defer storage.DbPool.Close()
 
 	// Immediately initialize the blocklists in the db. Then run approximately
-	// daily after that.
-	//
-	// NOTE: In some sense adding and updating the blocklists is adding state
-	// to this service and, instead, this should probably be done in a Lambda.
+	// daily after that. Could set a specific time instead, or actually have
+	// this set as a configuation variable.
 	if err := storage.CloneAndUpdateBlocklists(); err != nil {
 		checkError(err, "error initializing the blocklists")
 	}

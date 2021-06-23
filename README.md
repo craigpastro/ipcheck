@@ -1,10 +1,8 @@
-# IP Checker
-
-This is the much improved trie version.
+# Anomaly Detection
 
 ## Design document
 
-(This document is now outdated.) There is a [design document](https://docs.google.com/document/d/1i_hwcNFGmx_v72G_TZ9YjHjzUM6Yv74tvBlvb_CoHfU/edit#) which describes the general system, assumptions, tradeoffs, future work, etc.
+(**This document is now outdated.**) There is a [design document](https://docs.google.com/document/d/1i_hwcNFGmx_v72G_TZ9YjHjzUM6Yv74tvBlvb_CoHfU/edit#) which describes the general system, assumptions, tradeoffs, future work, etc.
 
 ## Usage
 
@@ -32,7 +30,7 @@ should start the service listening at `127.0.0.1:8080`.
 
 Suppose you would like to check if `193.242.145.0` is in the blocklist. Simply
 ```
-curl -XGET http://127.0.0.1:8080/v1/addresses/193.242.145.0
+curl -XGET http://127.0.0.1:8080/v1/addresses/193.242.145.28
 ```
 The response will be either
 ```
@@ -57,7 +55,7 @@ go test ./...
 ## Benchmarking
 
 ```
-$ ab -n 10000 -c 10 http://127.0.0.1:8080/v1/addresses/193.242.145.0
+$ ab -n 10000 -c 10 http://127.0.0.1:8080/v1/addresses/193.242.145.28
 This is ApacheBench, Version 2.3 <$Revision: 1879490 $>
 Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
 Licensed to The Apache Software Foundation, http://www.apache.org/

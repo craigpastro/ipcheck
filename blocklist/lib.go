@@ -23,12 +23,30 @@ type BlConfig struct {
 
 var ranger cidranger.Ranger
 
-func InitBl(config BlConfig, cloneRepo bool) {
-	if cloneRepo {
-		cloneBlocklistRepo(config)
+func CloneRepoAndPopulateTrie(config BlConfig) error {
+	if err := cloneRepo(config); err != nil {
+		return err
 	}
 
-	ranger = cidranger.NewPCTrieRanger()
+	PopulateTrie(config)
+	return nil
+}
+
+func cloneRepo(config BlConfig) error {
+	if err := os.RemoveAll(config.IPSetsDir); err != nil {
+		return errors.Wrap(err, fmt.Sprintf("error removing '%v'", config.IPSetsDir))
+	}
+
+	if _, err := git.PlainClone(config.IPSetsDir, false, &git.CloneOptions{URL: blocklistRepoURL}); err != nil {
+		return errors.Wrap(err, fmt.Sprintf("error cloning '%v'", blocklistRepoURL))
+	}
+
+	log.Printf("successfully cloned '%v'\n", blocklistRepoURL)
+	return nil
+}
+
+func PopulateTrie(config BlConfig) {
+	newRanger := cidranger.NewPCTrieRanger()
 
 	for _, ipSet := range config.IPSets {
 		filename := filepath.Join(config.IPSetsDir, ipSet)
@@ -50,28 +68,16 @@ func InitBl(config BlConfig, cloneRepo bool) {
 					_, network, err = net.ParseCIDR(l + "/32")
 				}
 
-				if err := ranger.Insert(cidranger.NewBasicRangerEntry(*network)); err != nil {
+				if err := newRanger.Insert(cidranger.NewBasicRangerEntry(*network)); err != nil {
 					log.Printf("error inserting '%v' in the trie: %v", network, err)
 					continue
 				}
-				log.Printf("inserted '%v' in the trie", network)
 			}
 		}
 	}
-}
 
-func cloneBlocklistRepo(config BlConfig) error {
-	if err := os.RemoveAll(config.IPSetsDir); err != nil {
-		return errors.Wrap(err, fmt.Sprintf("error removing '%v'", config.IPSetsDir))
-	}
-
-	if _, err := git.PlainClone(config.IPSetsDir, false, &git.CloneOptions{URL: blocklistRepoURL}); err != nil {
-		return errors.Wrap(err, fmt.Sprintf("error cloning '%v'", blocklistRepoURL))
-	}
-
-	log.Printf("successfully cloned '%v'\n", blocklistRepoURL)
-
-	return nil
+	ranger = newRanger
+	log.Printf("trie has been populated")
 }
 
 func InBlocklist(ip net.IP) (bool, error) {

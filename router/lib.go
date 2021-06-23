@@ -19,13 +19,16 @@ func InitRouter(ginMode string) *gin.Engine {
 
 	r.GET("/v1/addresses/:ipaddress", inBlocklist)
 
-	// For testing purposes.
-	// r.PUT("/addresses", func(c *gin.Context) {
-	// 	if err := blocklist.CloneAndUpdateBlocklists(); err != nil {
-	// 		log.Printf("error updating blocklist: %v", err)
-	// 	}
-	// 	c.Status(http.StatusOK)
-	// })
+	return r
+}
+
+func TestMode(r *gin.Engine, config blocklist.BlConfig) *gin.Engine {
+	r.PUT("/addresses", func(c *gin.Context) {
+		if err := blocklist.CloneRepoAndPopulateTrie(config); err != nil {
+			log.Printf("error updating blocklist: %v", err)
+		}
+		c.Status(http.StatusOK)
+	})
 
 	return r
 }

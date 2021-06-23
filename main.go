@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/joho/godotenv"
+	"github.com/robfig/cron"
 	"github.com/siyopao/ipcheck/blocklist"
 	"github.com/siyopao/ipcheck/router"
 )
@@ -18,9 +19,18 @@ type appConfig struct {
 func main() {
 	appConfig, blConfig := loadEnvVars()
 
-	blocklist.InitBl(blConfig, false)
+	if err := blocklist.CloneRepoAndPopulateTrie(blConfig); err != nil {
+		checkError(err, "error initializing the blocklists")
+	}
+	c := cron.New()
+	c.AddFunc("@every 24h", func() {
+		if err := blocklist.CloneRepoAndPopulateTrie(blConfig); err != nil {
+			log.Printf("error updating blocklist: %v", err)
+		}
+	})
+	c.Start()
 
-	r := router.InitRouter(appConfig.ginMode)
+	r := router.TestMode(router.InitRouter(appConfig.ginMode), blConfig)
 	if err := r.Run(appConfig.serverAddr); err != nil {
 		checkError(err, "error starting the server")
 	}

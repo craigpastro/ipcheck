@@ -6,17 +6,11 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/siyopao/ipcheck/storage"
+	"github.com/siyopao/ipcheck/blocklist"
 )
 
-type BlockedIP struct {
-	IPAddress  net.IP      `json:"ipAddress"`
-	Blocklists []Blocklist `json:"blockLists"`
-}
-
-type Blocklist struct {
-	Filename       string `json:"filename"`
-	SourceFileDate string `json:"sourceFileDate"`
+type Response struct {
+	InBlocklist bool `json:"inBlocklist"`
 }
 
 func InitRouter(ginMode string) *gin.Engine {
@@ -26,42 +20,32 @@ func InitRouter(ginMode string) *gin.Engine {
 	r.GET("/v1/addresses/:ipaddress", inBlocklist)
 
 	// For testing purposes.
-	r.PUT("/addresses", func(c *gin.Context) {
-		if err := storage.CloneAndUpdateBlocklists(); err != nil {
-			log.Printf("error updating blocklist: %v", err)
-		}
-		c.Status(http.StatusOK)
-	})
+	// r.PUT("/addresses", func(c *gin.Context) {
+	// 	if err := blocklist.CloneAndUpdateBlocklists(); err != nil {
+	// 		log.Printf("error updating blocklist: %v", err)
+	// 	}
+	// 	c.Status(http.StatusOK)
+	// })
 
 	return r
 }
 
 func inBlocklist(c *gin.Context) {
-	ipAddress := net.ParseIP(c.Param("ipaddress"))
+	ip := net.ParseIP(c.Param("ipaddress"))
 
-	if ipAddress == nil {
+	if ip == nil {
 		c.Status(http.StatusBadRequest)
 	} else {
-		log.Printf("checking blocklist for '%v'\n", ipAddress)
-
-		blockedIP, err := storage.IsIPAddressInBlocklist(ipAddress)
+		isBlocked, err := blocklist.InBlocklist(ip)
 		if err != nil {
-			log.Printf("error checking if '%v' is in the blocklists: %v", ipAddress, err)
+			log.Printf("error checking if '%v' is in the blocklists: %v", ip, err)
 			c.Status(http.StatusInternalServerError)
-		} else if blockedIP != nil {
-			log.Printf("'%v' is in the blocklists\n", ipAddress)
-			c.JSON(http.StatusOK, convertToProtocolObject(blockedIP))
+		} else if isBlocked {
+			log.Printf("'%v' is in the blocklists\n", ip)
+			c.JSON(http.StatusOK, Response{true})
 		} else {
-			log.Printf("'%v' is NOT in the blocklists\n", ipAddress)
-			c.Status(http.StatusNoContent)
+			log.Printf("'%v' is NOT in the blocklists\n", ip)
+			c.JSON(http.StatusOK, Response{false})
 		}
 	}
-}
-
-func convertToProtocolObject(blockedIP *storage.BlockedIP) BlockedIP {
-	var blocklists []Blocklist
-	for _, blocklist := range blockedIP.Blocklists {
-		blocklists = append(blocklists, Blocklist{blocklist.Filename, blocklist.SourceFileDate})
-	}
-	return BlockedIP{blockedIP.Address, blocklists}
 }

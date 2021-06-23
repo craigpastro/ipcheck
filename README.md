@@ -1,8 +1,8 @@
 # IP Checker
 
-## Update
+## A new version!
 
-There is an PR that updates this project to use an in-memory trie. It is still a WIP, but the basic functionality is there. https://github.com/siyopao/ipcheck/pull/13
+There is a [new version](https://github.com/siyopao/ipcheck/tree/trie) that updates this project to use an in-memory trie.
 
 ## Design document
 

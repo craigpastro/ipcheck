@@ -1,10 +1,8 @@
 # IP Checker
 
-## TODO
+## Update
 
-- [ ] Review error handling
-- [ ] If benchmarks are terrible find a better way to populate the table
-- [ ] Is the way I update the table sane?
+There is an PR that updates this project to use an in-memory trie. It is still a WIP, but the basic functionality is there. https://github.com/siyopao/ipcheck/pull/13
 
 ## Design document
 

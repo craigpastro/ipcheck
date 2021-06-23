@@ -62,10 +62,20 @@ func PopulateTrie(config BlConfig) {
 			l := scanner.Text()
 
 			if !strings.HasPrefix(l, "#") {
-				_, network, err := net.ParseCIDR(l)
+				ip, network, err := net.ParseCIDR(l)
 				if err != nil {
 					// Super hacky
-					_, network, err = net.ParseCIDR(l + "/32")
+					ip = net.ParseIP(l)
+					if ip == nil {
+						continue
+					}
+
+					if ip.To4() != nil {
+						// So an IPV4 address.
+						_, network, _ = net.ParseCIDR(l + "/32")
+					} else {
+						_, network, _ = net.ParseCIDR(l + "/128")
+					}
 				}
 
 				if err := newRanger.Insert(cidranger.NewBasicRangerEntry(*network)); err != nil {

@@ -10,7 +10,8 @@ import (
 )
 
 type Response struct {
-	InBlocklist bool `json:"inBlocklist"`
+	IP          net.IP `json:"ip"`
+	InBlocklist bool   `json:"inBlocklist"`
 }
 
 func InitRouter(ginMode string, config blocklist.BlConfig) *gin.Engine {
@@ -19,7 +20,7 @@ func InitRouter(ginMode string, config blocklist.BlConfig) *gin.Engine {
 
 	r.GET("/v1/addresses/:ipaddress", inBlocklist)
 
-	r.PUT("/addresses", func(c *gin.Context) {
+	r.PUT("/v1/addresses", func(c *gin.Context) {
 		if err := blocklist.CloneRepoAndPopulateTrie(config); err != nil {
 			log.Fatalf("error updating blocklist: %v", err)
 		}
@@ -41,10 +42,10 @@ func inBlocklist(c *gin.Context) {
 			c.Status(http.StatusInternalServerError)
 		} else if isBlocked {
 			log.Printf("'%v' is in the blocklists\n", ip)
-			c.JSON(http.StatusOK, Response{true})
+			c.JSON(http.StatusOK, Response{ip, true})
 		} else {
 			log.Printf("'%v' is NOT in the blocklists\n", ip)
-			c.JSON(http.StatusOK, Response{false})
+			c.JSON(http.StatusOK, Response{ip, false})
 		}
 	}
 }

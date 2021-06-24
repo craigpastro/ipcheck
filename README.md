@@ -2,7 +2,12 @@
 
 ## Design document
 
-(**This document is now outdated.**) There is a [design document](https://docs.google.com/document/d/1i_hwcNFGmx_v72G_TZ9YjHjzUM6Yv74tvBlvb_CoHfU/edit#) which describes the general system, assumptions, tradeoffs, future work, etc.
+ - [design document](https://docs.google.com/document/d/1i_hwcNFGmx_v72G_TZ9YjHjzUM6Yv74tvBlvb_CoHfU/edit#) which **is now badly out of date**.
+
+ Let me try to explain some of the differences:
+ - So now we make use of an in-memory trie to do the IP address checking.
+ - Our response no longer contains which lists that the IP address belongs to. It just returns "yes" or "no".
+ - There is an endpoint `PUT /v1/addresses` which is use to tell the system to update its blocklists from the blocklist repo. If it fails to update, the system will just crash. The expectation is that you will spin up a new one.
 
 ## Usage
 

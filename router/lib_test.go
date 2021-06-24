@@ -2,6 +2,7 @@ package router
 
 import (
 	"encoding/json"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -11,23 +12,26 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var config blocklist.BlConfig
+
 func TestMain(m *testing.M) {
-	blocklist.PopulateTrie(blocklist.BlConfig{
+	config = blocklist.BlConfig{
 		IPSetsDir: "../test_ipsets",
 		IPSets:    []string{"a.netset", "b.ipset", "c.ipset"},
-	})
+	}
+	blocklist.PopulateTrie(config)
 
 	os.Exit(m.Run())
 }
 
 func TestIPAddressIsNotInABlocklist(t *testing.T) {
-	ipAddress := "1.2.3.4"
-	want := Response{false}
+	ip := "1.2.3.4"
+	want := Response{net.ParseIP(ip), false}
 	var got Response
 
-	r := InitRouter("release")
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/addresses/"+ipAddress, nil)
+	req, _ := http.NewRequest("GET", "/v1/addresses/"+ip, nil)
+	r := InitRouter("release", config)
 	r.ServeHTTP(w, req)
 	json.Unmarshal([]byte(w.Body.String()), &got)
 
@@ -37,13 +41,13 @@ func TestIPAddressIsNotInABlocklist(t *testing.T) {
 }
 
 func TestIPAddressIsInANetSet(t *testing.T) {
-	ipAddress := "5.188.206.37"
-	want := Response{true}
+	ip := "5.188.206.37"
+	want := Response{net.ParseIP(ip), true}
 	var got Response
 
-	r := InitRouter("release")
+	r := InitRouter("release", config)
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/addresses/"+ipAddress, nil)
+	req, _ := http.NewRequest("GET", "/v1/addresses/"+ip, nil)
 	r.ServeHTTP(w, req)
 	json.Unmarshal([]byte(w.Body.String()), &got)
 
@@ -52,13 +56,13 @@ func TestIPAddressIsInANetSet(t *testing.T) {
 }
 
 func TestIPAddressIsInAnIPSet(t *testing.T) {
-	ipAddress := "1.0.175.32"
-	want := Response{true}
+	ip := "1.0.175.32"
+	want := Response{net.ParseIP(ip), true}
 	var got Response
 
-	r := InitRouter("release")
+	r := InitRouter("release", config)
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/addresses/"+ipAddress, nil)
+	req, _ := http.NewRequest("GET", "/v1/addresses/"+ip, nil)
 	r.ServeHTTP(w, req)
 	json.Unmarshal([]byte(w.Body.String()), &got)
 
@@ -67,13 +71,13 @@ func TestIPAddressIsInAnIPSet(t *testing.T) {
 }
 
 func TestIPAddressIsInTwoBlocklists(t *testing.T) {
-	ipAddress := "45.134.26.37"
-	want := Response{true}
+	ip := "45.134.26.37"
+	want := Response{net.ParseIP(ip), true}
 	var got Response
 
-	r := InitRouter("release")
+	r := InitRouter("release", config)
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/addresses/"+ipAddress, nil)
+	req, _ := http.NewRequest("GET", "/v1/addresses/"+ip, nil)
 	r.ServeHTTP(w, req)
 	json.Unmarshal([]byte(w.Body.String()), &got)
 
@@ -82,13 +86,13 @@ func TestIPAddressIsInTwoBlocklists(t *testing.T) {
 }
 
 func TestNotAllMatchesReturnsOneMatch(t *testing.T) {
-	ipAddress := "45.134.26.37"
-	want := Response{true}
+	ip := "45.134.26.37"
+	want := Response{net.ParseIP(ip), true}
 	var got Response
 
-	r := InitRouter("release")
+	r := InitRouter("release", config)
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/addresses/"+ipAddress, nil)
+	req, _ := http.NewRequest("GET", "/v1/addresses/"+ip, nil)
 	r.ServeHTTP(w, req)
 	json.Unmarshal([]byte(w.Body.String()), &got)
 
@@ -97,13 +101,13 @@ func TestNotAllMatchesReturnsOneMatch(t *testing.T) {
 }
 
 func TestIPV6AddressIsNotInABlocklist(t *testing.T) {
-	ipAddress := "::1"
-	want := Response{false}
+	ip := "::1"
+	want := Response{net.ParseIP(ip), false}
 	var got Response
 
-	r := InitRouter("release")
+	r := InitRouter("release", config)
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/addresses/"+ipAddress, nil)
+	req, _ := http.NewRequest("GET", "/v1/addresses/"+ip, nil)
 	r.ServeHTTP(w, req)
 	json.Unmarshal([]byte(w.Body.String()), &got)
 
@@ -112,13 +116,13 @@ func TestIPV6AddressIsNotInABlocklist(t *testing.T) {
 }
 
 func TestIPV6AddressIsInAnIPSet(t *testing.T) {
-	ipAddress := "2001:db8::8a2e:370:7334"
-	want := Response{true}
+	ip := "2001:db8::8a2e:370:7334"
+	want := Response{net.ParseIP(ip), true}
 	var got Response
 
-	r := InitRouter("release")
+	r := InitRouter("release", config)
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/addresses/"+ipAddress, nil)
+	req, _ := http.NewRequest("GET", "/v1/addresses/"+ip, nil)
 	r.ServeHTTP(w, req)
 	json.Unmarshal([]byte(w.Body.String()), &got)
 
@@ -127,13 +131,13 @@ func TestIPV6AddressIsInAnIPSet(t *testing.T) {
 }
 
 func TestIPV6AddressIsInANetSet(t *testing.T) {
-	ipAddress := "2021:abc:d::1"
-	want := Response{true}
+	ip := "2021:abc:d::1"
+	want := Response{net.ParseIP(ip), true}
 	var got Response
 
-	r := InitRouter("release")
+	r := InitRouter("release", config)
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/addresses/"+ipAddress, nil)
+	req, _ := http.NewRequest("GET", "/v1/addresses/"+ip, nil)
 	r.ServeHTTP(w, req)
 	json.Unmarshal([]byte(w.Body.String()), &got)
 
@@ -142,11 +146,11 @@ func TestIPV6AddressIsInANetSet(t *testing.T) {
 }
 
 func TestNotAnIPAddress(t *testing.T) {
-	ipAddress := "foo"
+	ip := "foo"
 
-	r := InitRouter("release")
+	r := InitRouter("release", config)
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/addresses/"+ipAddress, nil)
+	req, _ := http.NewRequest("GET", "/v1/addresses/"+ip, nil)
 	r.ServeHTTP(w, req)
 
 	assert.Equal(t, 400, w.Code)

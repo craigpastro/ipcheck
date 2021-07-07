@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/go-git/go-git/v5"
-	"github.com/pkg/errors"
 	"github.com/yl2chen/cidranger"
 )
 
@@ -34,11 +33,11 @@ func CloneRepoAndPopulateTrie(config BlConfig) error {
 
 func cloneRepo(config BlConfig) error {
 	if err := os.RemoveAll(config.IPSetsDir); err != nil {
-		return errors.Wrap(err, fmt.Sprintf("error removing '%v'", config.IPSetsDir))
+		return fmt.Errorf("error removing '%v': %w", config.IPSetsDir, err)
 	}
 
 	if _, err := git.PlainClone(config.IPSetsDir, false, &git.CloneOptions{URL: blocklistRepoURL}); err != nil {
-		return errors.Wrap(err, fmt.Sprintf("error cloning '%v'", blocklistRepoURL))
+		return fmt.Errorf("error cloning '%v': %w", blocklistRepoURL, err)
 	}
 
 	log.Printf("successfully cloned '%v'\n", blocklistRepoURL)
@@ -93,7 +92,7 @@ func PopulateTrie(config BlConfig) {
 func InBlocklist(ip net.IP) (bool, error) {
 	res, err := ranger.Contains(ip)
 	if err != nil {
-		return false, errors.Wrap(err, "error checking containment in the trie")
+		return false, fmt.Errorf("error checking containment in the trie: %w", err)
 	}
 
 	return res, nil

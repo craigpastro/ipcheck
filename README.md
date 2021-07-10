@@ -1,5 +1,7 @@
 # Anomaly Detection
 
+This is the gRPC version. There is also a [Gin version](https://github.com/siyopao/ipcheck/tree/gin-version).
+
 ## Design document
 
  - [Design document](https://docs.google.com/document/d/1i_hwcNFGmx_v72G_TZ9YjHjzUM6Yv74tvBlvb_CoHfU/edit#) which **is now badly out of date**.

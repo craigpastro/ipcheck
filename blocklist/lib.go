@@ -20,23 +20,26 @@ type BlConfig struct {
 	IPSets    []string
 }
 
+var Config BlConfig
 var ranger cidranger.Ranger
 
-func CloneRepoAndPopulateTrie(config BlConfig) error {
-	if err := cloneRepo(config); err != nil {
+func InitBlocklists(config BlConfig) error {
+	Config = config
+
+	if err := cloneRepo(Config.IPSetsDir); err != nil {
 		return err
 	}
 
-	PopulateTrie(config)
+	populateTrie(Config)
 	return nil
 }
 
-func cloneRepo(config BlConfig) error {
-	if err := os.RemoveAll(config.IPSetsDir); err != nil {
-		return fmt.Errorf("error removing '%v': %w", config.IPSetsDir, err)
+func cloneRepo(ipSetsDir string) error {
+	if err := os.RemoveAll(ipSetsDir); err != nil {
+		return fmt.Errorf("error removing '%v': %w", ipSetsDir, err)
 	}
 
-	if _, err := git.PlainClone(config.IPSetsDir, false, &git.CloneOptions{URL: blocklistRepoURL}); err != nil {
+	if _, err := git.PlainClone(ipSetsDir, false, &git.CloneOptions{URL: blocklistRepoURL}); err != nil {
 		return fmt.Errorf("error cloning '%v': %w", blocklistRepoURL, err)
 	}
 
@@ -44,7 +47,7 @@ func cloneRepo(config BlConfig) error {
 	return nil
 }
 
-func PopulateTrie(config BlConfig) {
+func populateTrie(config BlConfig) {
 	newRanger := cidranger.NewPCTrieRanger()
 
 	for _, ipSet := range config.IPSets {
@@ -63,7 +66,6 @@ func PopulateTrie(config BlConfig) {
 			if !strings.HasPrefix(l, "#") {
 				ip, network, err := net.ParseCIDR(l)
 				if err != nil {
-					// Super hacky
 					ip = net.ParseIP(l)
 					if ip == nil {
 						continue

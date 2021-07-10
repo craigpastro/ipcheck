@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package api.proto.v1;
+option go_package="/api/proto/v1";
+
+service IpCheck {
+  rpc InBlocklist (InBlocklistRequest) returns (InBlocklistResponse) {}
+  rpc InitBlocklists (InitBlocklistsRequest) returns (InitBlocklistsResponse) {}
+}
+
+message InBlocklistRequest {
+  string ip = 1;
+}
+
+message InBlocklistResponse {
+  string ip = 1;
+  bool in_blocklist = 2;
+}
+
+message InitBlocklistsRequest {}
+message InitBlocklistsResponse {}

@@ -2,7 +2,7 @@
 
 ## Design document
 
- - [design document](https://docs.google.com/document/d/1i_hwcNFGmx_v72G_TZ9YjHjzUM6Yv74tvBlvb_CoHfU/edit#) which **is now badly out of date**.
+ - [Design document](https://docs.google.com/document/d/1i_hwcNFGmx_v72G_TZ9YjHjzUM6Yv74tvBlvb_CoHfU/edit#) which **is now badly out of date**.
 
  Let me try to explain some of the differences:
  - So now we make use of an in-memory trie to do the IP address checking.
@@ -20,35 +20,35 @@ https://golang.org/
 Set any variables in [`.env`](./.env) to configure the behaviour of the service.
 
 - `SERVER_ADDR` - The address the server will listen on. The default is `127.0.0.1:8080`.
-- `GIN_MODE` - The mode Gin will run in. Choose either `debug` or `release`. The default is `release`.
 - `IP_SETS_DIR` - The directory where you want to download the ipsets to. Default is `/tmp/ipsets` (which will not work on Windows so please update it if you are using Windows).
 - `IP_SETS` - A comma separated list of blocklists that you would like the system to use. Please find the list of all blocklists at https://github.com/firehol/blocklist-ipsets. Note, adding many blocklists may lead to performance degradation. The default is `feodo.ipset,palevo.ipset,sslbl.ipset,zeus.ipset,zeus_badips,dshield.netset,spamhaus_drop.netset,spamhaus_edrop.netset,fullbogons.netset,openbl.ipset,blocklist_de.ipset`. (The Level 1 and some of Level 2 blocklists described [here](https://github.com/firehol/blocklist-ipsets#which-ones-to-use).)
 
 ### Running the service
 
+1. If the gRPC code needs updating, regenerate it with:
+  ```
+  protoc --go_out=. --go_opt=paths=source_relative \
+        --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+        api/proto/v1/ipcheck.proto
+  ```
+2. Then
 ```
 go run .
 ```
-should start the service listening at `127.0.0.1:8080`.
+should start the service listening at `[::1]:50051`.
 
 ### API
 
-Suppose you would like to check if `193.242.145.0` is in the blocklist. Simply
-```
-curl -XGET http://127.0.0.1:8080/v1/addresses/193.242.145.28
-```
-The response will be either
-```
-{
-  "inBlocklist": true
-}
-```
-or
-```
-{
-  "inBlocklist": false
-}
-```
+We will use [`grpcurl`](https://github.com/fullstorydev/grpcurl) for the examples.
+
+- Check if `193.242.145.0` is in the blocklist with:
+  ```
+  grpcurl -plaintext -import-path ./api/proto/v1 -proto ipcheck.proto -d '{"ip": "193.242.145.0"}' [::1]:50051 api.proto.v1.IpCheck/InBlocklist
+  ```
+- Update the blocklists with:
+  ```
+  grpcurl -plaintext -import-path ./api/proto/v1 -proto ipcheck.proto [::1]:50051 api.proto.v1.IpCheck/InitBlocklists
+  ```
 
 ### Tests
 

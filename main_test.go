@@ -10,8 +10,7 @@ import (
 func TestLoadEnvVarsLoadsDotEnv(t *testing.T) {
 	appConfig, dbConfig := loadEnvVars()
 
-	assert.Equal(t, appConfig.ginMode, "release")
-	assert.Equal(t, appConfig.serverAddr, "127.0.0.1:8080")
+	assert.Equal(t, appConfig.serverAddr, "[::1]:50051")
 	assert.Equal(t, dbConfig.IPSetsDir, "/tmp/ipsets")
 	assert.Equal(t, dbConfig.IPSets[0], "feodo.ipset")
 }
@@ -23,5 +22,4 @@ func TestLoadEnvVarsDoesNotOverrideSetEnvVars(t *testing.T) {
 	appConfig, _ := loadEnvVars()
 
 	assert.Equal(t, appConfig.serverAddr, "localhost:9999")
-	assert.Equal(t, appConfig.ginMode, "release")
 }

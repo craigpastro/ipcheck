@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/go-git/go-git/v5"
-	"github.com/pkg/errors"
 	"github.com/yl2chen/cidranger"
 )
 
@@ -21,31 +20,34 @@ type BlConfig struct {
 	IPSets    []string
 }
 
+var Config BlConfig
 var ranger cidranger.Ranger
 
-func CloneRepoAndPopulateTrie(config BlConfig) error {
-	if err := cloneRepo(config); err != nil {
+func InitBlocklists(config BlConfig) error {
+	Config = config
+
+	if err := cloneRepo(Config.IPSetsDir); err != nil {
 		return err
 	}
 
-	PopulateTrie(config)
+	populateTrie(Config)
 	return nil
 }
 
-func cloneRepo(config BlConfig) error {
-	if err := os.RemoveAll(config.IPSetsDir); err != nil {
-		return errors.Wrap(err, fmt.Sprintf("error removing '%v'", config.IPSetsDir))
+func cloneRepo(ipSetsDir string) error {
+	if err := os.RemoveAll(ipSetsDir); err != nil {
+		return fmt.Errorf("error removing '%v': %w", ipSetsDir, err)
 	}
 
-	if _, err := git.PlainClone(config.IPSetsDir, false, &git.CloneOptions{URL: blocklistRepoURL}); err != nil {
-		return errors.Wrap(err, fmt.Sprintf("error cloning '%v'", blocklistRepoURL))
+	if _, err := git.PlainClone(ipSetsDir, false, &git.CloneOptions{URL: blocklistRepoURL}); err != nil {
+		return fmt.Errorf("error cloning '%v': %w", blocklistRepoURL, err)
 	}
 
 	log.Printf("successfully cloned '%v'\n", blocklistRepoURL)
 	return nil
 }
 
-func PopulateTrie(config BlConfig) {
+func populateTrie(config BlConfig) {
 	newRanger := cidranger.NewPCTrieRanger()
 
 	for _, ipSet := range config.IPSets {
@@ -64,7 +66,6 @@ func PopulateTrie(config BlConfig) {
 			if !strings.HasPrefix(l, "#") {
 				ip, network, err := net.ParseCIDR(l)
 				if err != nil {
-					// Super hacky
 					ip = net.ParseIP(l)
 					if ip == nil {
 						continue
@@ -93,7 +94,7 @@ func PopulateTrie(config BlConfig) {
 func InBlocklist(ip net.IP) (bool, error) {
 	res, err := ranger.Contains(ip)
 	if err != nil {
-		return false, errors.Wrap(err, "error checking containment in the trie")
+		return false, fmt.Errorf("error checking containment in the trie: %w", err)
 	}
 
 	return res, nil

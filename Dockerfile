@@ -1,11 +1,9 @@
-FROM golang:1.16.5-buster AS builder
+FROM golang:1.16-alpine AS builder
 
 WORKDIR /app
 
-ENV GO111MODULE=on \
-    CGO_ENABLED=0 \
-    GOOS=linux \
-    GOARCH=amd64
+ENV GO111MODULE=on
+ENV GOOS=linux
 
 COPY ./ .
 
@@ -13,12 +11,13 @@ RUN go mod download
 
 RUN go build -o main .
 
-FROM golang:1.16.5-buster
+FROM golang:1.16-alpine
 
-EXPOSE 8080
+EXPOSE 50051
 
 WORKDIR /app
 
+COPY ./.env .
 COPY --from=builder /app/main .
 
 CMD ["/app/main"]

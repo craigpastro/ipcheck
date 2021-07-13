@@ -118,6 +118,18 @@ Percentage of the requests served within a certain time (ms)
  100%    305 (longest request)
 ```
 
+## Docker
+
+You can build the image with
+```
+docker build -t ipcheck .
+```
+Then can run the container using
+```
+docker run --rm --name ipcheck -p 127.0.0.1:50051:50051 -e SERVER_ADDR=":50051" ipcheck
+```
+When that starts listening you can make requests to `127.0.0.1:50051`.
+
 ## Steps to make IP Checker production ready
 
 Some steps are described in the [Future Work](https://docs.google.com/document/d/1i_hwcNFGmx_v72G_TZ9YjHjzUM6Yv74tvBlvb_CoHfU/edit#heading=h.bcsw102vr267) section of the design document.
